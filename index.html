@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .restart-btn {
+            position: absolute;
+            bottom: 60px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #444;
+            color: #999;
+            padding: 12px 35px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            color: white;
+            border-color: #ff0000;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+            background: rgba(20, 0, 0, 0.9);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="heartCanvas"></canvas>
+    
+    <button class="restart-btn" onclick="resetDrawing()">Replay</button>
+
+    <script>
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // We need TWO variables to track the animation to stop it properly
+        let animationId;
+        let timeoutId; 
+        
+        let k = 0; 
+        
+        // SPEED SETTING (100ms = very slow)
+        const DRAW_DELAY = 100; 
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function heartA(k) {
+            return 15 * Math.pow(Math.sin(k), 3);
+        }
+
+        function heartB(k) {
+            return 12 * Math.cos(k) - 5 * Math.cos(2 * k) - 2 * Math.cos(3 * k) - Math.cos(4 * k);
+        }
+
+        function draw() {
+            const minDimension = Math.min(canvas.width, canvas.height);
+            const scale = minDimension / 55; 
+            const cx = canvas.width / 2;
+            const cy = (canvas.height / 2) - 50; 
+
+            ctx.lineWidth = 0.5; 
+            ctx.strokeStyle = "#ff0000"; 
+            
+            ctx.beginPath();
+            
+            let startX = cx + heartA(k) * scale;
+            let startY = cy - heartB(k) * scale;
+            ctx.moveTo(startX, startY);
+
+            if (k > 6000) {
+                return;
+            }
+
+            k++; 
+            
+            let x = heartA(k) * scale;
+            let y = -heartB(k) * scale; 
+
+            ctx.lineTo(cx + x, cy + y);
+            ctx.stroke();
+
+            // Save the timeout ID so we can cancel it if "Replay" is clicked
+            timeoutId = setTimeout(() => {
+                animationId = requestAnimationFrame(draw);
+            }, DRAW_DELAY);
+        }
+
+        function resetDrawing() {
+            // CRITICAL FIX: Clear the timeout AND the animation frame
+            // This ensures the old loop stops completely before the new one starts
+            clearTimeout(timeoutId);
+            cancelAnimationFrame(animationId);
+            
+            // Clear Screen
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Reset Counter
+            k = 0;
+            
+            // Start
+            draw();
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            resetDrawing();
+        });
+
+        resizeCanvas();
+        resetDrawing();
+
+    </script>
+</body>
+</html>
